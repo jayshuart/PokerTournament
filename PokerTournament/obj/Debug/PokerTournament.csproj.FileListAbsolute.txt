@@ -10,3 +10,9 @@ C:\Game AI Online\Projects\Project3\PokerTournament v2\PokerTournament\obj\Debug
 C:\Game AI Online\Projects\Project3\PokerTournament v2\PokerTournament\bin\Debug\PokerTournament.exe
 C:\Game AI Online\Projects\Project3\PokerTournament v2\PokerTournament\bin\Debug\PokerTournament.pdb
 C:\Game AI Online\Projects\Project3\PokerTournament v2\PokerTournament\obj\Debug\PokerTournament.csprojResolveAssemblyReference.cache
+C:\Users\Kevin Idzik\Documents\GitHub\IGME-560\PokerTournament\PokerTournament\bin\Debug\PokerTournament.exe.config
+C:\Users\Kevin Idzik\Documents\GitHub\IGME-560\PokerTournament\PokerTournament\obj\Debug\PokerTournament.exe
+C:\Users\Kevin Idzik\Documents\GitHub\IGME-560\PokerTournament\PokerTournament\obj\Debug\PokerTournament.pdb
+C:\Users\Kevin Idzik\Documents\GitHub\IGME-560\PokerTournament\PokerTournament\bin\Debug\PokerTournament.exe
+C:\Users\Kevin Idzik\Documents\GitHub\IGME-560\PokerTournament\PokerTournament\bin\Debug\PokerTournament.pdb
+C:\Users\Kevin Idzik\Documents\GitHub\IGME-560\PokerTournament\PokerTournament\obj\Debug\PokerTournament.csprojResolveAssemblyReference.cache
