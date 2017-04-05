@@ -30,6 +30,28 @@ namespace PokerTournament
         public override PlayerAction BettingRound2(List<PlayerAction> actions, Card[] hand)
         {
             throw new NotImplementedException();
+            //review actions of other player
+                //how much did they bet in round 1?
+
+                //draw? - how many?
+                    //1
+                    //2
+                    //3
+                    //4+
+                        //they dont have shit
+
+                //call?
+
+                //bet/raise?
+                    //how much?
+
+                    //how many times has this happened?
+                        //twice means
+
+            //evaluate hand
+                //fold if really weak
+
+                //bluff for 2+
         }
 
         public override PlayerAction Draw(Card[] hand)

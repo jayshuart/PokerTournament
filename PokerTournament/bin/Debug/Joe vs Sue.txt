@@ -1,42 +1,52 @@
 Starting round 1
 Ante for this round: 10
 Betting round 1:
-Player: Sue Action Phase: Bet1 Action Name: check Amount: 0
+Player: Sue Action Phase: Bet1 Action Name: bet Amount: 10
  
-Player: Joe Action Phase: Bet1 Action Name: bet Amount: 20
+Player: Joe Action Phase: Bet1 Action Name: bet Amount: 10
+ 
+Player: Sue Action Phase: Bet1 Action Name: bet Amount: 10
+ 
+Player: Joe Action Phase: Bet1 Action Name: bet Amount: 10
+ 
+Player: Sue Action Phase: Bet1 Action Name: bet Amount: 10
+ 
+Player: Joe Action Phase: Bet1 Action Name: bet Amount: 10
+ 
+Player: Sue Action Phase: Bet1 Action Name: bet Amount: 10
+ 
+Player: Joe Action Phase: Bet1 Action Name: bet Amount: 10
+ 
+Player: Sue Action Phase: Bet1 Action Name: bet Amount: 100
+ 
+Player: Joe Action Phase: Bet1 Action Name: bet Amount: 200
  
 Player: Sue Action Phase: Bet1 Action Name: call Amount: 0
  
 Player: Joe Action Phase: Bet1 Action Name: call Amount: 0
  
-After Bet1, pot is 60
+After Bet1, pot is 400
  
 Name: Sue
 Hand Rank: 2 
-Six of Spades Six of Diamonds Queen of Spades King of Hearts Ace of Spades 
+Two of Hearts Two of Spades Six of Spades Nine of Clubs King of Clubs 
 
  
 Name: Joe
-Hand Rank: 2 
-Two of Spades Nine of Clubs Ten of Spades Ten of Hearts Queen of Hearts 
+Hand Rank: 6 
+Three of Hearts Six of Hearts Eight of Hearts Nine of Hearts Queen of Hearts 
 
  
 Betting round 2:
-Player: Sue Action Phase: Bet2 Action Name: bet Amount: 20
+Player: Sue Action Phase: Bet2 Action Name: fold Amount: 0
  
-Player: Joe Action Phase: Bet2 Action Name: raise Amount: 20
+After Bet2, pot is 400
  
-Player: Sue Action Phase: Bet2 Action Name: call Amount: 0
- 
-Player: Joe Action Phase: Bet2 Action Name: call Amount: 0
- 
-After Bet2, pot is 120
- 
-Joe has a better hand and wins 120
+Joe has a better hand and wins 400
 
 After round 1, player status: 
- Name: Joe Dealer: True Money: 1050
- Name: Sue Dealer: False Money: 950
+ Name: Joe Dealer: True Money: 1150
+ Name: Sue Dealer: False Money: 850
  
 Starting round 2
 Ante for this round: 10
