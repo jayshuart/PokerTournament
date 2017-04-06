@@ -12,6 +12,17 @@ namespace PokerTournament
     /// </summary>
     class Player10 : Player
     {
+        #region fields
+        //hand weights
+        private float estimatedHandStrength; //estimation of their hand strength
+        private int handStrength; //own hand strength - Evaluate.RateAHand(hand, out highCard);
+        private float bluffWeight; //how willing are we to just bluff?
+
+        //"memory"
+        private int bettingCycleCount; //times we went back and forth betting/raising
+        private float bluffLikelihood; //based on how they played and actual hand strength
+
+        #endregion
         /// <summary>
         /// Player10 Constructor
         /// </summary>
@@ -20,18 +31,25 @@ namespace PokerTournament
         /// <param name="mny">Amount of money the player has</param>
         public Player10(int idNum, string nm, int mny) : base(idNum, nm, mny)
         {
+            //initialize fields
+            estimatedHandStrength = 0.0f;
+            handStrength = 0;
+            bluffWeight = 0.0f;
+
+            bettingCycleCount = 0;
+            bluffLikelihood = 0.0f;
         }
 
         public override PlayerAction BettingRound1(List<PlayerAction> actions, Card[] hand)
         {
-            
 
-            return new PlayerAction(Name, "Bet1", "bet", 1);
+            return new PlayerAction(Name, "Bet1", "bet", 1); //just so it doesnt bitch about not having a return
         }
 
         public override PlayerAction BettingRound2(List<PlayerAction> actions, Card[] hand)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+
             //review actions of other player
                 //how much did they bet in round 1?
 
@@ -50,12 +68,17 @@ namespace PokerTournament
                     //how many times has this happened?
                         //twice means
 
-            //evaluate hand
+            //EVAL HAND
+            //save hand strength
+            Card highCard = null;
+            handStrength = Evaluate.RateAHand(hand, out highCard); //(0 weak - 10 strong af)
+
                 //fold if really weak
 
-                //bluff for 2+
+                //bluff for 2+ at this point in the round
 
-                //bet
+            return new PlayerAction(Name, "Bet1", "bet", 1);
+
         }
 
         public override PlayerAction Draw(Card[] hand)
@@ -64,6 +87,10 @@ namespace PokerTournament
         }
 
         #region Helper Methods
+        /// <summary>
+        /// Gets list fo player actions and attempts to figure out what they mean, assigning fuzzy logic weights to the other players actions
+        /// </summary>
+        /// <param name="actions">List of player actions</param>
         private void ReviewActions(List<PlayerAction> actions)
         {
             //review other players actions
@@ -79,6 +106,7 @@ namespace PokerTournament
                         if (act.ActionName == "stand pat") //not taking any cards
                         {
                             //prolly has solid hand if they dont want to change out cards
+                            estimatedHandStrength = 5; //atleast rank 5 uses all 5 cards
                         }
                         else //draw
                         {
@@ -93,6 +121,7 @@ namespace PokerTournament
                                     break;
                                 case 4: //4+ cards mean they dont have anything
                                 case 5:
+                                    estimatedHandStrength = 1; // set to 1 bc they dont have anythin
                                     break;
                                 default:
                                     break;
