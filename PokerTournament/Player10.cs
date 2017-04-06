@@ -4,6 +4,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+/*
+HAND STRENGTH CHANCES
+Royal flush <0.001%
+Straight flush (not including royal flush) <0.002%
+Four of a kind 0.02%
+Full house 0.14%
+Flush (excluding royal flush and straight flush) 0.20%
+Straight (excluding royal flush and straight flush) 0.39%
+Three of a kind 2.11%
+Two pair 4.75%
+One pair 42.30%
+No pair / High card 50.10%
+*/
+
 namespace PokerTournament
 {
     /// <summary>
@@ -32,7 +46,7 @@ namespace PokerTournament
         public Player10(int idNum, string nm, int mny) : base(idNum, nm, mny)
         {
             //initialize fields
-            estimatedHandStrength = 0.0f;
+            estimatedHandStrength = 1;
             handStrength = 0;
             bluffWeight = 0.0f;
 
@@ -51,27 +65,12 @@ namespace PokerTournament
             //throw new NotImplementedException();
 
             //review actions of other player
-                //how much did they bet in round 1?
-
-                //draw? - how many?
-                    //1
-                    //2
-                    //3
-                    //4+
-                        //they dont have shit
-
-                //call?
-
-                //bet/raise?
-                    //how much?
-
-                    //how many times has this happened?
-                        //twice means
+            EvaluateActions(actions);
 
             //EVAL HAND
             //save hand strength
             Card highCard = null;
-            handStrength = Evaluate.RateAHand(hand, out highCard); //(0 weak - 10 strong af)
+            handStrength = Evaluate.RateAHand(hand, out highCard); //(1 weak - 10 strong af)
 
                 //fold if really weak
 
@@ -91,7 +90,7 @@ namespace PokerTournament
         /// Gets list fo player actions and attempts to figure out what they mean, assigning fuzzy logic weights to the other players actions
         /// </summary>
         /// <param name="actions">List of player actions</param>
-        private void ReviewActions(List<PlayerAction> actions)
+        private void EvaluateActions(List<PlayerAction> actions)
         {
             //review other players actions
             foreach (PlayerAction act in actions)
@@ -106,7 +105,7 @@ namespace PokerTournament
                         if (act.ActionName == "stand pat") //not taking any cards
                         {
                             //prolly has solid hand if they dont want to change out cards
-                            estimatedHandStrength = 5; //atleast rank 5 uses all 5 cards
+                            estimatedHandStrength += 3; //atleast rank 5 uses all 5 cards
                         }
                         else //draw
                         {
@@ -114,10 +113,13 @@ namespace PokerTournament
                             switch (act.Amount)
                             {
                                 case 1:  //1, 2, 3 cards measn they prolly have somthing- average
+                                    estimatedHandStrength += 2;
                                     break;
                                 case 2:
+                                    estimatedHandStrength += 1;
                                     break;
                                 case 3: //most likely atleast have a pair
+                                    estimatedHandStrength = 2;
                                     break;
                                 case 4: //4+ cards mean they dont have anything
                                 case 5:
@@ -130,15 +132,88 @@ namespace PokerTournament
 
                     }
                     else //bet 1 or 2, should be same checks
-                    {
-                        //how much was bet?
+                    { 
+                       //switch for action
+                       switch(act.ActionName)
+                        {
+                            case "check":
+                                break;
+                            case "bet": //bet and raise should have same logic
+                            case "raise":
+                                //how much was bet?
+                                if (act.Amount >= 100)
+                                {
+                                    estimatedHandStrength += 2 / bettingCycleCount; //scale incase of back and forth betting
+                                }
+                                else if (act.Amount >= 50)
+                                {
+                                    estimatedHandStrength += 1 / bettingCycleCount; //scale incase of back and forth betting
+                                }
+                                else if (act.Amount >= 25)
+                                {
+                                    estimatedHandStrength += .5f;
+                                }
+                                else if (act.Amount >= 15)
+                                {
+                                    estimatedHandStrength += .3f;
+                                }
+                                else if (act.Amount >= 10)
+                                {
+                                    estimatedHandStrength += .2f;
+                                }
+                                else if (act.Amount >= 5)
+                                {
+                                    estimatedHandStrength += .1f;
+                                }
+                                else if (act.Amount >= 2)
+                                {
+                                    estimatedHandStrength += .04f;
+                                }
+                                else if (act.Amount >= 1)
+                                {
+                                    estimatedHandStrength += .03f;
+                                }
 
-                        //how many times in a row have they bet? if its 2+ might mean good hand
-
+                                //up betting cycle count so we know if we are going back and forth
+                                bettingCycleCount++;
+                                break;
+                        }
                     }
 
                 }
             }
+        }
+
+        /// <summary>
+        /// used to chose what action todo in response to the last act of the other player and our weights
+        /// </summary>
+        /// <param name="lastAct">last PlayerAction done by the other player</param>
+        /// <returns></returns>
+        private PlayerAction ResponseAction(PlayerAction lastAct)
+        {
+            PlayerAction response = null;
+
+            //switch for action
+            switch (lastAct.ActionName)
+            {
+                case "call":
+                    //call or fold
+                    break;
+                case "fold":
+                    //they folded, we shouldnt do anything
+                    break;
+                case "check":
+                    //check, bet, or fold
+                    break;
+                case "bet": //bet and raise should have same logic
+                case "raise":
+                    //raise, call, or fold
+                    break;
+            }
+
+
+            //we know what todo! - return our repsonse
+            return response;
         }
         #endregion
     }
