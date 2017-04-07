@@ -34,7 +34,7 @@ namespace PokerTournament
 
         //"memory"
         private int bettingCycleCount; //times we went back and forth betting/raising
-        private float bluffLikelihood; //based on how they played and actual hand strength
+        private float bluffLikelihood; //based on how they played and estim hand strength
 
         #endregion
         /// <summary>
@@ -137,41 +137,35 @@ namespace PokerTournament
                        switch(act.ActionName)
                         {
                             case "check":
+                                //they dont wanna open, might indicate not great cards. not a real strong tell though
+                                estimatedHandStrength -= 0.3f; 
+                                break;
+                            case "call":
+                                //player is calling we can reset bet cycle
+                                bettingCycleCount = 0;
                                 break;
                             case "bet": //bet and raise should have same logic
                             case "raise":
                                 //how much was bet?
-                                if (act.Amount >= 100)
-                                {
-                                    estimatedHandStrength += 2 / bettingCycleCount; //scale incase of back and forth betting
-                                }
-                                else if (act.Amount >= 50)
-                                {
-                                    estimatedHandStrength += 1 / bettingCycleCount; //scale incase of back and forth betting
-                                }
-                                else if (act.Amount >= 25)
-                                {
-                                    estimatedHandStrength += .5f;
-                                }
-                                else if (act.Amount >= 15)
-                                {
-                                    estimatedHandStrength += .3f;
-                                }
-                                else if (act.Amount >= 10)
-                                {
-                                    estimatedHandStrength += .2f;
-                                }
-                                else if (act.Amount >= 5)
+                                if(act.Amount <= 5)
                                 {
                                     estimatedHandStrength += .1f;
                                 }
-                                else if (act.Amount >= 2)
+                                else if (act.Amount <= 15)
                                 {
-                                    estimatedHandStrength += .04f;
+                                    estimatedHandStrength += .5f;
                                 }
-                                else if (act.Amount >= 1)
+                                else if (act.Amount <= 35)
                                 {
-                                    estimatedHandStrength += .03f;
+                                    estimatedHandStrength += .7f;
+                                }
+                                else if (act.Amount <= 50)
+                                {
+                                    estimatedHandStrength += 1.0f / bettingCycleCount;
+                                }
+                                else if (act.Amount <= 100)
+                                {
+                                    estimatedHandStrength += 2.0f / bettingCycleCount; //dont make it go up tons if they but like this a buncha times
                                 }
 
                                 //up betting cycle count so we know if we are going back and forth
@@ -191,23 +185,41 @@ namespace PokerTournament
         /// <returns></returns>
         private PlayerAction ResponseAction(PlayerAction lastAct)
         {
+            //how much wiggle room are we giving our estimatedHand weights?
+            int wiggleRoom = -1; //negative for downward wiggle
+
+            //round the estimated hand stregnth
+            int roundedEstimate = (int) Math.Round(estimatedHandStrength + wiggleRoom, MidpointRounding.AwayFromZero);
+
+            //PlayerAction to be returned and done by our AI
             PlayerAction response = null;
 
             //switch for action
             switch (lastAct.ActionName)
             {
-                case "call":
-                    //call or fold
+                case "call": //call or fold
+                    //compare estimHand and our own hands strength
+                    if(roundedEstimate > handStrength)
+                    {
+                        //estim is more we should fold
+                        response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0); //fold in the same phase with 0 dollars bc folding
+                    }
+                    else
+                    {
+                        //we trust our hand- call
+                        response = new PlayerAction(Name, lastAct.ActionPhase, "call", 0);
+                    }
+
                     break;
                 case "fold":
                     //they folded, we shouldnt do anything
                     break;
-                case "check":
-                    //check, bet, or fold
+                case "check": //check, bet, or fold
+
                     break;
                 case "bet": //bet and raise should have same logic
-                case "raise":
-                    //raise, call, or fold
+                case "raise": //raise, call, or fold
+
                     break;
             }
 
