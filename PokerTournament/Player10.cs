@@ -238,11 +238,6 @@ namespace PokerTournament
                             }
                         }
                     }
-                    else if(handStrength > 5) //do we have a solid hand
-                    {
-                        //its good who cares, just check too
-                        response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
-                    }
                     else
                     {
                         //compare our hands
@@ -256,14 +251,33 @@ namespace PokerTournament
                             }
                             else
                             {
-                                //i think we can do it
-                                response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
+                                //how many times have we bet? OR are we too far from their strength to risk a bluff?
+                                if(bettingCycleCount > 3 || Math.Abs(roundedEstimate - handStrength) > bluffWeight)
+                                {
+                                    //we've done it too many times, just check bud
+                                    response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
+                                }
+                                else
+                                {
+                                    //bet- with bluffing enabled
+                                    response = new PlayerAction(Name, lastAct.ActionPhase, "bet", CalcAmount(true));
+                                }
+                                
                             }
                         }
                         else
                         {
-                            //solid chance ours is better
-                            response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
+                            //how many times have we bet? 
+                            if (bettingCycleCount > 3)
+                            {
+                                //we've done it too many times, just check bud
+                                response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
+                            }
+                            else
+                            {
+                                //bet
+                                response = new PlayerAction(Name, lastAct.ActionPhase, "bet", CalcAmount(false));
+                            }
                         }
                     }
                     break;
@@ -276,6 +290,19 @@ namespace PokerTournament
 
             //we know what todo! - return our repsonse
             return response;
+        }
+
+        /// <summary>
+        /// Calculates how much to bet/raise based on theirs and our own hand strength
+        /// </summary>
+        /// <param name="bluffing">Are we bluffing this bet? itll change the actual amount used</param>
+        /// <returns></returns>
+        private int CalcAmount(bool bluffing)
+        {
+            //start bet amount at 1 because 0 isnt a valid amount
+            int amount = 1;
+
+            return amount;
         }
         #endregion
     }
