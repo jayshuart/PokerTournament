@@ -138,11 +138,14 @@ namespace PokerTournament
                         {
                             case "check":
                                 //they dont wanna open, might indicate not great cards. not a real strong tell though
-                                theirHand -= 0.3f; 
+                                theirHand -= 0.3f;
+
+                                //reset betting cycle
+                                bettingCycleCount = 1;
                                 break;
                             case "call":
                                 //player is calling we can reset bet cycle
-                                bettingCycleCount = 0;
+                                bettingCycleCount = 1;
                                 break;
                             case "bet": //bet and raise should have same logic
                             case "raise":
@@ -251,8 +254,8 @@ namespace PokerTournament
                             }
                             else
                             {
-                                //how many times have we bet? OR are we too far from their strength to risk a bluff?
-                                if(bettingCycleCount > 3 || Math.Abs(roundedEstimate - handStrength) > bluffWeight)
+                                //how many times have we bet? OR are we too far from their strength to risk a bluff? - AND do we have money to use?
+                                if( (bettingCycleCount > 3 || Math.Abs(roundedEstimate - handStrength) > bluffWeight) && Money > 0)
                                 {
                                     //we've done it too many times, just check bud
                                     response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
@@ -267,8 +270,8 @@ namespace PokerTournament
                         }
                         else
                         {
-                            //how many times have we bet? 
-                            if (bettingCycleCount > 3)
+                            //how many times have we bet? and do we have money to bet?
+                            if (bettingCycleCount > 3 && Money > 0)
                             {
                                 //we've done it too many times, just check bud
                                 response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
@@ -302,6 +305,65 @@ namespace PokerTournament
             //start bet amount at 1 because 0 isnt a valid amount
             int amount = 1;
 
+            //how good are our cards?
+            switch(handStrength)
+            {
+                case 1: //5
+                    amount = 5 / bettingCycleCount; //scale for betting cycle, so we dont drop 15 bucks on a crap hand
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                    //set aount
+                    amount = (handStrength - 1) * 10;
+
+                    //check for bluffing
+                    if(bluffing)
+                    {
+                        //add a lil more ontop with scaling
+                        amount += 10 / bettingCycleCount;
+                    }
+                    break;
+                case 5: 
+                case 6: 
+                case 7:
+                    //set amount based on hand strength, cut off a lil by betting cycle
+                    amount = handStrength * 10 / bettingCycleCount;
+                    break;
+                case 8: 
+                case 9:
+                case 10:
+                    
+                    //account for inital bet
+                    if(bettingCycleCount > 1)
+                    {
+                        //smaller bet and scaling
+                        amount = (handStrength * 5) / bettingCycleCount;
+                    }
+                    else
+                    {
+                        //strong inital bet
+                        amount = handStrength * 10;
+                    }
+                    break;
+            }
+
+            //do we have enough money?
+            do
+            {
+                //cut amount down a bit
+                amount -= amount / 10;
+
+                //account for going below the anout of money we have
+                if(amount < 1)
+                {
+                    //reset to 1
+                    amount = 1;
+                }
+
+            } while (amount > Money);
+
+            //we found the amount - give it back
             return amount;
         }
         #endregion
