@@ -54,3 +54,4 @@ PokerTournament/bin/Debug/PokerTournament.vshost.exe.manifest
 PokerTournament/obj/Debug/PokerTournament.pdb
 *.cache
 PokerTournament/obj/Debug/PokerTournament.csproj.FileListAbsolute.txt
+*.pdb
