@@ -28,7 +28,7 @@ namespace PokerTournament
     {
         #region fields
         //hand weights
-        private float estimatedHandStrength; //estimation of their hand strength
+        private float theirHand; //estimation of their hand strength
         private int handStrength; //own hand strength - Evaluate.RateAHand(hand, out highCard);
         private float bluffWeight; //how willing are we to just bluff?
 
@@ -46,7 +46,7 @@ namespace PokerTournament
         public Player10(int idNum, string nm, int mny) : base(idNum, nm, mny)
         {
             //initialize fields
-            estimatedHandStrength = 1;
+            theirHand = 1;
             handStrength = 0;
             bluffWeight = 0.0f;
 
@@ -105,7 +105,7 @@ namespace PokerTournament
                         if (act.ActionName == "stand pat") //not taking any cards
                         {
                             //prolly has solid hand if they dont want to change out cards
-                            estimatedHandStrength += 3; //atleast rank 5 uses all 5 cards
+                            theirHand += 3; //atleast rank 5 uses all 5 cards
                         }
                         else //draw
                         {
@@ -113,17 +113,17 @@ namespace PokerTournament
                             switch (act.Amount)
                             {
                                 case 1:  //1, 2, 3 cards measn they prolly have somthing- average
-                                    estimatedHandStrength += 2;
+                                    theirHand += 2;
                                     break;
                                 case 2:
-                                    estimatedHandStrength += 1;
+                                    theirHand += 1;
                                     break;
                                 case 3: //most likely atleast have a pair
-                                    estimatedHandStrength = 2;
+                                    theirHand = 2;
                                     break;
                                 case 4: //4+ cards mean they dont have anything
                                 case 5:
-                                    estimatedHandStrength = 1; // set to 1 bc they dont have anythin
+                                    theirHand = 1; // set to 1 bc they dont have anythin
                                     break;
                                 default:
                                     break;
@@ -138,7 +138,7 @@ namespace PokerTournament
                         {
                             case "check":
                                 //they dont wanna open, might indicate not great cards. not a real strong tell though
-                                estimatedHandStrength -= 0.3f; 
+                                theirHand -= 0.3f; 
                                 break;
                             case "call":
                                 //player is calling we can reset bet cycle
@@ -149,23 +149,23 @@ namespace PokerTournament
                                 //how much was bet?
                                 if(act.Amount <= 5)
                                 {
-                                    estimatedHandStrength += .1f;
+                                    theirHand += .1f;
                                 }
                                 else if (act.Amount <= 15)
                                 {
-                                    estimatedHandStrength += .5f;
+                                    theirHand += .5f;
                                 }
                                 else if (act.Amount <= 35)
                                 {
-                                    estimatedHandStrength += .7f;
+                                    theirHand += .7f;
                                 }
                                 else if (act.Amount <= 50)
                                 {
-                                    estimatedHandStrength += 1.0f / bettingCycleCount;
+                                    theirHand += 1.0f / bettingCycleCount;
                                 }
                                 else if (act.Amount <= 100)
                                 {
-                                    estimatedHandStrength += 2.0f / bettingCycleCount; //dont make it go up tons if they but like this a buncha times
+                                    theirHand += 2.0f / bettingCycleCount; //dont make it go up tons if they but like this a buncha times
                                 }
 
                                 //up betting cycle count so we know if we are going back and forth
@@ -183,13 +183,13 @@ namespace PokerTournament
         /// </summary>
         /// <param name="lastAct">last PlayerAction done by the other player</param>
         /// <returns></returns>
-        private PlayerAction ResponseAction(PlayerAction lastAct)
+        private PlayerAction ResponseAction(PlayerAction lastAct, Card highCard)
         {
             //how much wiggle room are we giving our estimatedHand weights?
-            int wiggleRoom = -1; //negative for downward wiggle
+            float wiggleRoom = -1; //negative for downward wiggle
 
-            //round the estimated hand stregnth
-            int roundedEstimate = (int) Math.Round(estimatedHandStrength + wiggleRoom, MidpointRounding.AwayFromZero);
+            //round the estimated hand stregnth, also accounts for wiggle room
+            int roundedEstimate = (int) Math.Round(theirHand + wiggleRoom, MidpointRounding.AwayFromZero);
 
             //PlayerAction to be returned and done by our AI
             PlayerAction response = null;
@@ -215,7 +215,57 @@ namespace PokerTournament
                     //they folded, we shouldnt do anything
                     break;
                 case "check": //check, bet, or fold
-
+                    //how weak is our hand?
+                    if(handStrength == 1)
+                    {
+                        if(roundedEstimate > handStrength)
+                        {
+                            //theirs is better and we dont have anything, we should fold
+                            response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0); //fold in the same phase with 0 dollars bc folding
+                        }
+                        else
+                        {
+                            //how strong is our high card?
+                            if(highCard.Value > 9)
+                            {
+                                //a 10 or better - we'll check
+                                response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
+                            }
+                            else
+                            {
+                                //we should fold
+                                response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0);
+                            }
+                        }
+                    }
+                    else if(handStrength > 5) //do we have a solid hand
+                    {
+                        //its good who cares, just check too
+                        response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
+                    }
+                    else
+                    {
+                        //compare our hands
+                        if(roundedEstimate > handStrength)
+                        {
+                            //are we willing to just bluff and try it?
+                            if(roundedEstimate > handStrength + bluffWeight)
+                            {
+                                //theirs is prolly too good - dont chance it
+                                response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0);
+                            }
+                            else
+                            {
+                                //i think we can do it
+                                response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
+                            }
+                        }
+                        else
+                        {
+                            //solid chance ours is better
+                            response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
+                        }
+                    }
                     break;
                 case "bet": //bet and raise should have same logic
                 case "raise": //raise, call, or fold
