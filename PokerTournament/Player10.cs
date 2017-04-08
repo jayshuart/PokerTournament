@@ -82,7 +82,196 @@ namespace PokerTournament
 
         public override PlayerAction Draw(Card[] hand)
         {
-            throw new NotImplementedException();
+            // BRANCHING BEHAVIOR TREE (?) //
+
+            // Get hand Eval
+            Card highCard = null;
+            handStrength = Evaluate.RateAHand(hand, out highCard);
+
+            // number of tossed cards (and number to be drawn)
+            // pass into PlayerAction return at the end
+            int removed = 0;
+            
+            // Do stuff according to handStrength
+            switch (handStrength)
+            {
+                case 1: // weakest hand: HIGH CARD
+                    if (highCard.Value >= 10)       // Check the highCard's value, if highCard is a 10-J-Q-K-A
+                    {
+                        
+                        for (int i = 0; i < hand.Length; i++)   // remove everything but the high card
+                        {
+                            if (hand[i] == highCard)
+                                continue;   // ignore if the current card is the high card
+
+                            hand[i] = null; // remove
+                            removed++;
+                        }
+
+                        //thisAction = new PlayerAction(Name, "Draw", "draw", removed); ////////////////DO THIS AT THE END OF SWITCH?????
+
+                        Console.WriteLine("Player 10 threw away and will draw" + removed + " cards.");
+                    }
+                    else // if high card is not 10-J-Q-K-A then all these cards mean literally nothing, toss all
+                    {
+                        for (int i = 0; i < hand.Length; i++)
+                            hand[i] = null;
+
+                        //thisAction = new PlayerAction(Name, "Draw", "draw", 5);///////////////////////////
+
+                        Console.WriteLine("Player 10 throws away its entire hand.");
+                    }
+                    break;
+
+                case 2: // 1-PAIR
+                    int pairValue = 0;  // have to get the value of the 1pair, must be initialized to something
+
+                    for (int i = 2; i < 15; i++) // check all values
+                    {
+                        if (Evaluate.ValueCount(i, hand) == 2)  // count occurences of value (once 2 are found, break from for loop)
+                        {
+                            pairValue = i;
+                            break;
+                        }
+                    }
+
+                    // optimize chances of getting a higher hand
+                    // if the high card is not one of the pair AND it is 10-J-Q-K-A
+                    if (highCard.Value != pairValue && highCard.Value >= 10)
+                    {
+                        for (int i = 0; i < hand.Length; i++)
+                        {
+                            if (hand[i].Value == pairValue || hand[i].Value == highCard.Value)
+                                continue;   // do not toss if the current card is one of the pair OR if it is the HIGH CARD (that is different from the pair in this case)
+
+                            hand[i] = null;
+                        }
+
+                        removed = 2;
+                    }
+                    else // otherwise toss everything that isn't the pair
+                    {
+                        for (int i = 0; i < hand.Length; i++)
+                        {
+                            if (hand[i].Value == pairValue)
+                                continue;
+                            hand[i] = null;
+                        }
+
+                        removed = 3;
+                    }
+
+                    break;
+
+                case 3: // 2-PAIR
+                    // Get 2 pairs value
+                    int pair1Value = 0;
+                    int pair2Value = 0;
+
+                    // Count occurances of values and put as pair1's value
+                    for (int i = 2; i < 15; i++)
+                    {
+                        if (Evaluate.ValueCount(i, hand) == 2)
+                        {
+                            pair1Value = i;
+                            break;
+                        }
+                    }
+
+                    // Count occurences of values and put as pair2's value
+                    for (int i = 2; i < 15; i++)
+                    {
+                        if (Evaluate.ValueCount(i, hand) == 2)
+                        {
+                            if (i == pair1Value) continue;  // make sure to ignore pair 1
+                            pair2Value = i;
+                            break;
+                        }
+                    }
+
+                    // Check if either pair's value is the high card
+                    if (pair1Value == highCard.Value || pair2Value == highCard.Value)
+                    {
+                        for (int i = 0; i < hand.Length; i++)   // toss the 1 remaining card
+                        {
+                            if (hand[i].Value == pair1Value || hand[i].Value == pair2Value) continue;
+                            hand[i] = null;
+                        }
+
+                        removed = 1;
+                    }
+                    else
+                    {
+                        // Any other factors to decide what to do????
+
+                        // Otherwise return a stand pat action
+                        return new PlayerAction(Name, "Draw", "stand pat", 0);
+                    }
+                    break;
+
+                case 4: // 3-OF-A-KIND
+                    // Get the triple's value
+                    int tripleValue = 0;
+                    for (int i = 2; i < 15; i++)
+                    {
+                        if (Evaluate.ValueCount(i, hand) == 3)
+                        {
+                            pairValue = i;
+                            break;
+                        }
+                    }
+
+                    // optimize chances of getting a higher hand
+                    // if the high card is not one of the triple AND it is 10-J-Q-K-A
+                    if (highCard.Value != tripleValue && highCard.Value >= 10)
+                    {
+                        for (int i = 0; i < hand.Length; i++)
+                        {
+                            if (hand[i].Value == tripleValue || hand[i].Value == highCard.Value)
+                                continue;
+
+                            hand[i] = null;
+                        }
+
+                        removed = 1;
+                    }
+                    else
+                    {
+                        // otherwise, toss the cards that aren't the triple and not 10-J-Q-K-A
+                        for (int i = 0; i < hand.Length; i++)
+                        {
+                            if (hand[i].Value == tripleValue) continue;
+
+                            hand[i] = null;
+                        }
+
+                        removed = 2;
+                    }
+                    break;
+
+                // case 5: // STRAIGHT
+                    // probably not worth it to toss anything draw again, weigh this?
+                // case 6: // FLUSH
+                    // same as STRIAGHT
+
+                //case 7: // FULL HOUSE
+                    // which pair has the high card? (the triple or double?)
+                        //???????????
+                
+                // CASE 8: If 4 of a kind
+                    // if the diffent card is the high AND (10+)
+                        // weight whether or not to risk discarding the quadruple?
+                    // otherwise stand pat
+
+
+                case 9: // STRAIGHT FLUSH
+                case 10: // ROYAL FLUSH
+                    // just stand pat like a winner
+                    return new PlayerAction(Name, "Draw", "draw", removed);
+            }
+
+            // otherwise, do approriate action
+            return new PlayerAction(Name, "Draw", "draw", removed);
         }
 
         #region Helper Methods
@@ -102,7 +291,7 @@ namespace PokerTournament
                     if (act.ActionPhase == "draw") //draw
                     {
                         //check action name (stand pat, or draw)
-                        if (act.ActionName == "stand pat") //not taking any cards
+                        if (act.ActionName == "stand pat")  //not taking any cards
                         {
                             //prolly has solid hand if they dont want to change out cards
                             estimatedHandStrength += 3; //atleast rank 5 uses all 5 cards
