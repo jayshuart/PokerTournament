@@ -21,11 +21,12 @@ namespace PokerTournament
             Human h0 = new Human(0, "Joe", 1000);
             Human h1 = new Human(1, "Sue", 1000);
             Player10 player10 = new Player10(-1, "AI10", 1000);
+            Player10 player10_2 = new Player10(10, "AI10_2", 1000);
 
             // create the Game
-            Game myGame = new Game(h0, player10);
+            //Game myGame = new Game(h0, player10);
             //Game myGame = new Game(player10, h0);
-            //Game myGame = new Game(player10, player10); //AI testing
+            Game myGame = new Game(player10, player10_2); //AI testing
 
             myGame.Tournament(); // run the game
         }

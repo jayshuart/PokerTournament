@@ -81,7 +81,7 @@ namespace PokerTournament
             Console.WriteLine("bettingCycleCount: " + bettingCycleCount);
             Console.WriteLine("bluffLikelihood: " + bluffLikelihood);
 
-            if (actions.Count > 0 && actions[actions.Count].ActionPhase == "fold") //If the last action was fold
+            if (actions.Count > 0 && actions[actions.Count - 1].ActionPhase == "fold") //If the last action was fold
                 Reset(); //Reset all values
             else //Respond to actions other than fold
                 return ResponseAction(otherPlayerAction, highCard);
@@ -109,14 +109,14 @@ namespace PokerTournament
                 act = InitalBetting();
             }
             else */
-            if (actions[actions.Count].ActionPhase == "fold")
+            if (actions[actions.Count - 1].ActionPhase == "fold")
             {
                 //round is over reset all values
                 Reset();
             }
             else //they did something we should respond to that
             {
-                act = ResponseAction(actions[actions.Count], highCard);
+                act = ResponseAction(actions[actions.Count - 1], highCard);
             }
 
             return act;
