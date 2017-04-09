@@ -24,7 +24,8 @@ namespace PokerTournament
 
             // create the Game
             Game myGame = new Game(h0, player10);
-            //Game myGame = new Game(h0, player10); //AI testing
+            //Game myGame = new Game(player10, h0);
+            //Game myGame = new Game(player10, player10); //AI testing
 
             myGame.Tournament(); // run the game
         }

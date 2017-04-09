@@ -26,7 +26,7 @@ namespace PokerTournament
     /// </summary>
     class Player10 : Player
     {
-        #region fields
+        #region Fields
         //hand weights
         private float theirHand; //estimation of their hand strength
         private int handStrength; //own hand strength - Evaluate.RateAHand(hand, out highCard);
@@ -35,8 +35,8 @@ namespace PokerTournament
         //"memory"
         private int bettingCycleCount; //times we went back and forth betting/raising
         private float bluffLikelihood; //based on how they played and estim hand strength
-
         #endregion
+
         /// <summary>
         /// Player10 Constructor
         /// </summary>
@@ -50,14 +50,46 @@ namespace PokerTournament
             handStrength = 0;
             bluffWeight = 0.0f;
 
-            bettingCycleCount = 0;
+            bettingCycleCount = 1;
             bluffLikelihood = 0.0f;
         }
 
         public override PlayerAction BettingRound1(List<PlayerAction> actions, Card[] hand)
         {
+            PlayerAction otherPlayerAction = null;
 
-            return new PlayerAction(Name, "Bet1", "bet", 1); //just so it doesnt bitch about not having a return
+            //Loop to get the other player's action
+            foreach (PlayerAction action in actions)
+            {
+                if (action.Name != this.Name)
+                    otherPlayerAction = action;
+            }
+
+            //Bet differently depending on how much money we have?
+
+
+            EvaluateActions(actions); //Check the actions of the other player
+
+            Card highCard = null;
+            handStrength = Evaluate.RateAHand(hand, out highCard);
+
+            Console.WriteLine("Dealer: " + Dealer);
+            Console.WriteLine("Money: " + Money);
+            Console.WriteLine("HighCard: " + highCard);
+            Console.WriteLine("otherPlayerAction: " + otherPlayerAction);
+            Console.WriteLine("theirHand: " + theirHand);
+            Console.WriteLine("handStrength: " + handStrength);
+            Console.WriteLine("bluffWeight: " + bluffWeight);
+            Console.WriteLine("bettingCycleCount: " + bettingCycleCount);
+            Console.WriteLine("bluffLikelihood: " + bluffLikelihood);
+
+            return ResponseAction(otherPlayerAction, highCard);
+
+            //return new PlayerAction(Name, "Bet1", "bet", 1); //Bet
+            //return new PlayerAction(Name, "Bet1", "raise", 1); //Raise
+            //return new PlayerAction(Name, "Bet1", "call", 0); //Call
+            //return new PlayerAction(Name, "Bet1", "check", 0); //Check //Don't do this if money has been bet
+            //return new PlayerAction(Name, "Bet1", "fold", 0); //Fold
         }
 
         public override PlayerAction BettingRound2(List<PlayerAction> actions, Card[] hand)
@@ -76,7 +108,7 @@ namespace PokerTournament
 
                 //bluff for 2+ at this point in the round
 
-            return new PlayerAction(Name, "Bet1", "bet", 1);
+            return new PlayerAction(Name, "Bet2", "bet", 1);
 
         }
 
@@ -276,7 +308,7 @@ namespace PokerTournament
 
         #region Helper Methods
         /// <summary>
-        /// Gets list fo player actions and attempts to figure out what they mean, assigning fuzzy logic weights to the other players actions
+        /// Gets list of player actions and attempts to figure out what they mean, assigning fuzzy logic weights to the other players actions
         /// </summary>
         /// <param name="actions">List of player actions</param>
         private void EvaluateActions(List<PlayerAction> actions)
@@ -301,7 +333,7 @@ namespace PokerTournament
                             //switch based on how many cards are to be drawn
                             switch (act.Amount)
                             {
-                                case 1:  //1, 2, 3 cards measn they prolly have somthing- average
+                                case 1:  //1, 2, 3 cards means they prolly have something average
                                     theirHand += 2;
                                     break;
                                 case 2:
@@ -312,7 +344,7 @@ namespace PokerTournament
                                     break;
                                 case 4: //4+ cards mean they dont have anything
                                 case 5:
-                                    theirHand = 1; // set to 1 bc they dont have anythin
+                                    theirHand = 1; // set to 1 bc they dont have anything
                                     break;
                                 default:
                                     break;
@@ -365,15 +397,14 @@ namespace PokerTournament
                                 break;
                         }
                     }
-
                 }
             }
         }
 
         /// <summary>
-        /// used to chose what action todo in response to the last act of the other player and our weights
+        /// Used to chose what action to do in response to the last act of the other player and our weights
         /// </summary>
-        /// <param name="lastAct">last PlayerAction done by the other player</param>
+        /// <param name="lastAct">Last PlayerAction done by the other player</param>
         /// <returns></returns>
         private PlayerAction ResponseAction(PlayerAction lastAct, Card highCard)
         {
@@ -386,99 +417,103 @@ namespace PokerTournament
             //PlayerAction to be returned and done by our AI
             PlayerAction response = null;
 
-            //switch for action
-            switch (lastAct.ActionName)
-            {
-                case "call": //call or fold
-                    //compare estimHand and our own hands strength
-                    if(roundedEstimate > handStrength)
-                    {
-                        //estim is more we should fold
-                        response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0); //fold in the same phase with 0 dollars bc folding
-                    }
-                    else
-                    {
-                        //we trust our hand- call
-                        response = new PlayerAction(Name, lastAct.ActionPhase, "call", 0);
-                    }
-
-                    break;
-                case "fold":
-                    //they folded, we shouldnt do anything
-                    break;
-                case "check": //check, bet, or fold
-                    //how weak is our hand?
-                    if(handStrength == 1)
-                    {
+            //First round betting this will be null
+            if (lastAct != null && lastAct.ActionPhase != "Draw")
+                //switch for action
+                switch (lastAct.ActionName)
+                {
+                    case "call": //call or fold
+                        //compare estimHand and our own hands strength
                         if(roundedEstimate > handStrength)
                         {
-                            //theirs is better and we dont have anything, we should fold
+                            //estim is more we should fold
                             response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0); //fold in the same phase with 0 dollars bc folding
                         }
                         else
                         {
-                            //how strong is our high card?
-                            if(highCard.Value > 9)
+                            //we trust our hand- call
+                            response = new PlayerAction(Name, lastAct.ActionPhase, "call", 0);
+                        }
+                        break;
+                    case "fold":
+                        //they folded, we shouldnt do anything
+                        break;
+                    case "check": //check, bet, or fold
+                        //how weak is our hand?
+                        if(handStrength == 1)
+                        {
+                            if(roundedEstimate > handStrength)
                             {
-                                //a 10 or better - we'll check
-                                response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
+                                //theirs is better and we dont have anything, we should fold
+                                response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0); //fold in the same phase with 0 dollars bc folding
                             }
                             else
                             {
-                                //we should fold
-                                response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0);
+                                //how strong is our high card?
+                                if(highCard.Value > 9)
+                                {
+                                    //a 10 or better - we'll check
+                                    response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
+                                }
+                                else
+                                {
+                                    //we should fold
+                                    response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0);
+                                }
                             }
                         }
-                    }
-                    else
-                    {
-                        //compare our hands
-                        if(roundedEstimate > handStrength)
+                        else
                         {
-                            //are we willing to just bluff and try it?
-                            if(roundedEstimate > handStrength + bluffWeight)
+                            //compare our hands
+                            if(roundedEstimate > handStrength)
                             {
-                                //theirs is prolly too good - dont chance it
-                                response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0);
+                                //are we willing to just bluff and try it?
+                                if(roundedEstimate > handStrength + bluffWeight)
+                                {
+                                    //theirs is prolly too good - dont chance it
+                                    response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0);
+                                }
+                                else
+                                {
+                                    //how many times have we bet? OR are we too far from their strength to risk a bluff? - AND do we have money to use?
+                                    if( (bettingCycleCount > 3 || Math.Abs(roundedEstimate - handStrength) > bluffWeight) && Money > 0)
+                                    {
+                                        //we've done it too many times, just check bud
+                                        response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
+                                    }
+                                    else
+                                    {
+                                        //bet- with bluffing enabled
+                                        response = new PlayerAction(Name, lastAct.ActionPhase, "bet", CalcAmount(true));
+                                    }
+                                
+                                }
                             }
                             else
                             {
-                                //how many times have we bet? OR are we too far from their strength to risk a bluff? - AND do we have money to use?
-                                if( (bettingCycleCount > 3 || Math.Abs(roundedEstimate - handStrength) > bluffWeight) && Money > 0)
+                                //how many times have we bet? and do we have money to bet?
+                                if (bettingCycleCount > 3 && Money > 0)
                                 {
                                     //we've done it too many times, just check bud
                                     response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
                                 }
                                 else
                                 {
-                                    //bet- with bluffing enabled
-                                    response = new PlayerAction(Name, lastAct.ActionPhase, "bet", CalcAmount(true));
+                                    //bet
+                                    response = new PlayerAction(Name, lastAct.ActionPhase, "bet", CalcAmount(false));
                                 }
-                                
                             }
                         }
-                        else
-                        {
-                            //how many times have we bet? and do we have money to bet?
-                            if (bettingCycleCount > 3 && Money > 0)
-                            {
-                                //we've done it too many times, just check bud
-                                response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
-                            }
-                            else
-                            {
-                                //bet
-                                response = new PlayerAction(Name, lastAct.ActionPhase, "bet", CalcAmount(false));
-                            }
-                        }
-                    }
-                    break;
-                case "bet": //bet and raise should have same logic
-                case "raise": //raise, call, or fold
+                        break;
+                    case "bet": //bet and raise should have same logic
+                    case "raise": //raise, call, or fold
 
-                    break;
+                        break;
+                }
+            else
+            {
+                response = InitialBetting(lastAct, highCard); //Go through initial betting proceidures
             }
-
 
             //we know what todo! - return our repsonse
             return response;
@@ -487,7 +522,7 @@ namespace PokerTournament
         /// <summary>
         /// Calculates how much to bet/raise based on theirs and our own hand strength
         /// </summary>
-        /// <param name="bluffing">Are we bluffing this bet? itll change the actual amount used</param>
+        /// <param name="bluffing">Are we bluffing this bet? It'll change the actual amount used</param>
         /// <returns></returns>
         private int CalcAmount(bool bluffing)
         {
@@ -554,6 +589,54 @@ namespace PokerTournament
 
             //we found the amount - give it back
             return amount;
+        }
+
+        /// <summary>
+        /// Initial betting for when going first or after draw phase
+        /// Can bet, check, and fold
+        /// </summary>
+        /// <param name="highCard"></param>
+        /// <returns></returns>
+        private PlayerAction InitialBetting(PlayerAction lastAct, Card highCard)
+        {
+            string phase = null;
+
+            //Get the right phase name
+            if (lastAct == null)
+                phase = "Bet1";
+            else
+                phase = "Bet2";
+
+            switch (handStrength)
+            {
+                case 1:
+                    if (highCard.Value >= 14)
+                    {
+                        return new PlayerAction(Name, phase, "bet", CalcAmount(false)); //Bet
+                    }
+                    else
+                        return new PlayerAction(Name, phase, "bet", CalcAmount(false)); //Bet
+                case 2:
+                    return new PlayerAction(Name, phase, "bet", CalcAmount(false)); //Bet
+                case 3:
+                    return new PlayerAction(Name, phase, "bet", CalcAmount(false)); //Bet
+                case 4:
+                    return new PlayerAction(Name, phase, "bet", CalcAmount(false)); //Bet
+                case 5:
+                    return new PlayerAction(Name, phase, "bet", CalcAmount(false)); //Bet
+                case 6:
+                    return new PlayerAction(Name, phase, "bet", CalcAmount(false)); //Bet
+                case 7:
+                    return new PlayerAction(Name, phase, "bet", CalcAmount(false)); //Bet
+                case 8:
+                    return new PlayerAction(Name, phase, "bet", CalcAmount(false)); //Bet
+                case 9:
+                    return new PlayerAction(Name, phase, "bet", CalcAmount(false)); //Bet
+                case 10:
+                    return new PlayerAction(Name, phase, "bet", CalcAmount(false)); //Bet
+            }
+
+            return new PlayerAction(Name, phase, "fold", 0); //Fold, but this should never happen
         }
         #endregion
     }
