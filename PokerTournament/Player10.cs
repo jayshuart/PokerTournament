@@ -593,6 +593,7 @@ namespace PokerTournament
                         else
                         {
                             //we dont think our hand is better
+                            response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0);
                         }
                         break;
                 }
