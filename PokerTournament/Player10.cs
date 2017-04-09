@@ -58,16 +58,7 @@ namespace PokerTournament
 
         public override PlayerAction BettingRound1(List<PlayerAction> actions, Card[] hand)
         {
-            int localMoney = Money; //Update how much money we actually have
-
-            PlayerAction otherPlayerAction = null;
-
-            //Loop to get the other player's action
-            foreach (PlayerAction action in actions)
-            {
-                if (action.Name != this.Name)
-                    otherPlayerAction = action;
-            }
+            localMoney = Money; //Update how much money we actually have
 
             //Evaluate hand strength and get the high card
             Card highCard = null;
@@ -77,19 +68,21 @@ namespace PokerTournament
 
             if (actions.Count > 0 && actions[actions.Count - 1].ActionPhase == "fold") //If the last action was fold
                 Reset(); //Reset all values
+            else if (actions.Count == 0) //If this is round 1
+                return ResponseAction(null, highCard, "Bet1"); //Passing in null is handled and avoids ArgumentOutOfRange exceptions
             else //Respond to actions other than fold
-                return ResponseAction(otherPlayerAction, highCard);
+                return ResponseAction(actions[actions.Count - 1], highCard, "Bet1");
 
-            return null;
+            return new PlayerAction(Name, "Bet1", "fold", 0); //Fold
         }
 
         public override PlayerAction BettingRound2(List<PlayerAction> actions, Card[] hand)
         {
             //reset?
-
+            localMoney = Money;
             //throw new NotImplementedException();
             //action to be done
-            PlayerAction act = null;
+            PlayerAction act = new PlayerAction(Name, "Bet2", "fold", 0); //Fold;
 
             //EVAL HAND
             Card highCard = null;
@@ -112,7 +105,7 @@ namespace PokerTournament
             }
             else //they did something we should respond to that
             {
-                act = ResponseAction(actions[actions.Count - 1], highCard);
+                act = ResponseAction(actions[actions.Count - 1], highCard, "Bet2");
             }
 
             return act;
@@ -441,7 +434,7 @@ namespace PokerTournament
         /// </summary>
         /// <param name="lastAct">Last PlayerAction done by the other player</param>
         /// <returns></returns>
-        private PlayerAction ResponseAction(PlayerAction lastAct, Card highCard)
+        private PlayerAction ResponseAction(PlayerAction lastAct, Card highCard, string phase)
         {
             //how much wiggle room are we giving our estimatedHand weights?
             float wiggleRoom = -1; //negative for downward wiggle
@@ -450,7 +443,7 @@ namespace PokerTournament
             int roundedEstimate = (int)Math.Round(theirHand + wiggleRoom, MidpointRounding.AwayFromZero);
 
             //PlayerAction to be returned and done by our AI
-            PlayerAction response = null;
+            PlayerAction response = new PlayerAction(Name, phase, "fold", 0); //Fold;
 
             //First round betting this will be null
             if (lastAct != null && lastAct.ActionPhase != "Draw")
@@ -663,7 +656,7 @@ namespace PokerTournament
                     break;
             }
 
-            amount += (highCardValue * highCardValue); //Modify the bet by the highCardValue
+            amount += (highCardValue * (highCardValue / 4)); //Modify the bet by the highCardValue
 
             //do we have enough money?
             do
@@ -705,7 +698,9 @@ namespace PokerTournament
             switch (handStrength)
             {
                 case 1: //Junk
-                    if (roundedEstimate < handStrength) //Check if we feel good about this hand
+                    if (highCard.Value >= 11)
+                        return new PlayerAction(Name, phase, "bet", CalcAmount(0, false));
+                    else if (roundedEstimate <= handStrength) //Check if we feel good about this hand
                         return new PlayerAction(Name, phase, "check", 0);
                     else //Fold if we don't
                         return new PlayerAction(Name, phase, "fold", 0);
@@ -716,9 +711,9 @@ namespace PokerTournament
                             if (Evaluate.ValueCount(i, Hand) == 2)
                             {
                                 if (i > 12)
-                                    return new PlayerAction(Name, phase, "bet", CalcAmount(i, true));
+                                    return new PlayerAction(Name, phase, "bet", CalcAmount(i / 2, true));
                                 else
-                                    return new PlayerAction(Name, phase, "bet", CalcAmount(i, false));
+                                    return new PlayerAction(Name, phase, "bet", CalcAmount(i / 2, false));
                             }
                     }
                     else if (roundedEstimate == handStrength) //Check if we could win this hand
@@ -728,9 +723,9 @@ namespace PokerTournament
                 case 3: //Two pair
                     if (roundedEstimate < handStrength) //Bet if we feel good about this hand
                     {
-                        for (int i = 15; i > 2; i++) //Loop for pair
+                        for (int i = 15; i > 2; i--) //Loop for pair
                             if (Evaluate.ValueCount(i, Hand) == 2)
-                                return new PlayerAction(Name, phase, "bet", CalcAmount(i, true));
+                                return new PlayerAction(Name, phase, "bet", CalcAmount(i * (3 / 4), true));
                     }
                     else if (roundedEstimate == handStrength) //Check if we could win this hand
                         return new PlayerAction(Name, phase, "check", 0);
