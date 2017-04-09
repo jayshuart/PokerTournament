@@ -85,6 +85,8 @@ namespace PokerTournament
 
         public override PlayerAction BettingRound2(List<PlayerAction> actions, Card[] hand)
         {
+            //reset?
+
             //throw new NotImplementedException();
             //action to be done
             PlayerAction act = null;
@@ -540,7 +542,65 @@ namespace PokerTournament
                         break;
                     case "bet": //bet and raise should have same logic
                     case "raise": //raise, call, or fold
-
+                        if(handStrength >= roundedEstimate)
+                        {
+                            //we think we have a better hand lets see our options
+                            switch (handStrength)
+                            {
+                                case 1:
+                                    //check our hand against their 
+                                    if(handStrength > theirHand)
+                                    {
+                                        //we still think we can win
+                                        response = new PlayerAction(Name, lastAct.ActionPhase, "call", 0); //call
+                                    }
+                                    else
+                                    {
+                                        response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0); //we dont have anything and dont trust ourselves
+                                    }
+                                    break;
+                                case 2:
+                                case 3:
+                                    response = new PlayerAction(Name, lastAct.ActionPhase, "call", 0);
+                                    break;
+                                case 4:
+                                case 5:
+                                case 6:
+                                    //bluff?
+                                    Random rand = new Random();
+                                    if (rand.Next(2) == 0 && bettingCycleCount >= 3) //bluffing or bet cycle
+                                    {
+                                        //we can bluff
+                                        response = new PlayerAction(Name, lastAct.ActionPhase, "raise", CalcAmount(highCard.Value, true));
+                                    }
+                                    else
+                                    {
+                                        //not bluuffing or we bet too many times in a row, just call
+                                        response = new PlayerAction(Name, lastAct.ActionPhase, "call", 0);
+                                    }
+                                    break;
+                                case 7:
+                                case 8:
+                                case 9:
+                                case 10:
+                                    //how many times have we looped through betting?
+                                    if (bettingCycleCount >= 3)
+                                    {
+                                        //too many times just call
+                                        response = new PlayerAction(Name, lastAct.ActionPhase, "call", 0);
+                                    }
+                                    else
+                                    {
+                                        //raise back fight me nerd
+                                        response = new PlayerAction(Name, lastAct.ActionPhase, "raise", CalcAmount(highCard.Value, false));
+                                    }
+                                    break;
+                            }
+                        }
+                        else
+                        {
+                            //we dont think our hand is better
+                        }
                         break;
                 }
             else
