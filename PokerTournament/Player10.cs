@@ -133,14 +133,14 @@ namespace PokerTournament
             // number of tossed cards (and number to be drawn)
             // pass into PlayerAction return at the end
             int removed = 0;
-            
+
             // Do stuff according to handStrength
             switch (handStrength)
             {
                 case 1: // weakest hand: HIGH CARD
                     if (highCard.Value >= 10)       // Check the highCard's value, if highCard is a 10-J-Q-K-A
                     {
-                        
+
                         for (int i = 0; i < hand.Length; i++)   // remove everything but the high card
                         {
                             if (hand[i] == highCard)
@@ -292,24 +292,53 @@ namespace PokerTournament
                     break;
 
                 // case 5: // STRAIGHT
-                    // probably not worth it to toss anything draw again, weigh this?
+                // probably not worth it to toss anything draw again, weigh this?
                 // case 6: // FLUSH
-                    // same as STRIAGHT
+                // same as STRIAGHT
 
                 //case 7: // FULL HOUSE
-                    // which pair has the high card? (the triple or double?)
-                        //???????????
-                
+                // which pair has the high card? (the triple or double?)
+                // if the high card is of the triple
+
                 // CASE 8: If 4 of a kind
-                    // if the diffent card is the high AND (10+)
-                        // weight whether or not to risk discarding the quadruple?
-                    // otherwise stand pat
+                // if the diffent card is the high AND (10+)
+                // weight whether or not to risk discarding the quadruple?
+                // otherwise stand pat
 
+                //case 8: // 4 of a kind
+                //    // Get Quadruple value
+                //    int quadValue = 0;
+                //    for (int i = 2; i < 15; i++) 
+                //    {
+                //        if (Evaluate.ValueCount(i, hand) == 4)  // when there are 4 occurances of one of the values (i)
+                //        {
+                //            pairValue = i;
+                //            break;
+                //        }
+                //    }
 
+                //    //
+                //    if (quadValue == highCard.Value || highCard.Value <= 10)
+                //    {
+                //        // Get rid of the other card because we can do better
+                //        for (int i = 0; i < hand.Length; i++)
+                //        {
+                //            if (hand[i].Value == quadValue)
+                //                continue;
+
+                //            hand[i] = null;
+                //        }
+                //        removed = 1;
+                //    }
+                //    break;
+
+                case 5:
+                case 6:
+                case 8:
                 case 9: // STRAIGHT FLUSH
                 case 10: // ROYAL FLUSH
                     // just stand pat like a winner
-                    return new PlayerAction(Name, "Draw", "draw", removed);
+                    return new PlayerAction(Name, "Draw", "stand pat", 0);
             }
 
             // otherwise, do approriate action
@@ -363,9 +392,9 @@ namespace PokerTournament
 
                     }
                     else //bet 1 or 2, should be same checks
-                    { 
-                       //switch for action
-                       switch(act.ActionName)
+                    {
+                        //switch for action
+                        switch (act.ActionName)
                         {
                             case "check":
                                 //they dont wanna open, might indicate not great cards. not a real strong tell though
@@ -381,7 +410,7 @@ namespace PokerTournament
                             case "bet": //bet and raise should have same logic
                             case "raise":
                                 //how much was bet?
-                                if(act.Amount <= 5)
+                                if (act.Amount <= 5)
                                 {
                                     theirHand += .1f;
                                 }
@@ -434,7 +463,7 @@ namespace PokerTournament
                 {
                     case "call": //call or fold
                         //compare estimHand and our own hands strength
-                        if(roundedEstimate > handStrength)
+                        if (roundedEstimate > handStrength)
                         {
                             //estim is more we should fold
                             response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0); //fold in the same phase with 0 dollars bc folding
@@ -450,9 +479,9 @@ namespace PokerTournament
                         break;
                     case "check": //check, bet, or fold
                         //how weak is our hand?
-                        if(handStrength == 1)
+                        if (handStrength == 1)
                         {
-                            if(roundedEstimate > handStrength)
+                            if (roundedEstimate > handStrength)
                             {
                                 //theirs is better and we dont have anything, we should fold
                                 response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0); //fold in the same phase with 0 dollars bc folding
@@ -460,7 +489,7 @@ namespace PokerTournament
                             else
                             {
                                 //how strong is our high card?
-                                if(highCard.Value > 9)
+                                if (highCard.Value > 9)
                                 {
                                     //a 10 or better - we'll check
                                     response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
@@ -475,10 +504,10 @@ namespace PokerTournament
                         else
                         {
                             //compare our hands
-                            if(roundedEstimate > handStrength)
+                            if (roundedEstimate > handStrength)
                             {
                                 //are we willing to just bluff and try it?
-                                if(roundedEstimate > handStrength + bluffWeight)
+                                if (roundedEstimate > handStrength + bluffWeight)
                                 {
                                     //theirs is prolly too good - dont chance it
                                     response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0);
@@ -486,7 +515,7 @@ namespace PokerTournament
                                 else
                                 {
                                     //how many times have we bet? OR are we too far from their strength to risk a bluff? - AND do we have money to use?
-                                    if( (bettingCycleCount > 3 || Math.Abs(roundedEstimate - handStrength) > bluffWeight) && Money > 0)
+                                    if ((bettingCycleCount > 3 || Math.Abs(roundedEstimate - handStrength) > bluffWeight) && Money > 0)
                                     {
                                         //we've done it too many times, just check bud
                                         response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
@@ -496,7 +525,7 @@ namespace PokerTournament
                                         //bet- with bluffing enabled
                                         response = new PlayerAction(Name, lastAct.ActionPhase, "bet", CalcAmount(highCard.Value, true));
                                     }
-                                
+
                                 }
                             }
                             else
@@ -538,7 +567,7 @@ namespace PokerTournament
             int amount = 1;
 
             //how good are our cards?
-            switch(handStrength)
+            switch (handStrength)
             {
                 case 1: //5
                     amount = 5 / bettingCycleCount; //scale for betting cycle, so we dont drop 15 bucks on a crap hand
@@ -550,24 +579,24 @@ namespace PokerTournament
                     amount = (handStrength - 1) * 10;
 
                     //check for bluffing
-                    if(bluffing)
+                    if (bluffing)
                     {
                         //add a lil more ontop with scaling
                         amount += 10 / bettingCycleCount;
                     }
                     break;
-                case 5: 
-                case 6: 
+                case 5:
+                case 6:
                 case 7:
                     //set amount based on hand strength, cut off a lil by betting cycle
                     amount = handStrength * 10 / bettingCycleCount;
                     break;
-                case 8: 
+                case 8:
                 case 9:
                 case 10:
-                    
+
                     //account for inital bet
-                    if(bettingCycleCount > 1)
+                    if (bettingCycleCount > 1)
                     {
                         //smaller bet and scaling
                         amount = (handStrength * 5) / bettingCycleCount;
@@ -589,7 +618,7 @@ namespace PokerTournament
                 amount -= amount / 10;
 
                 //account for going below the anout of money we have
-                if(amount < 1)
+                if (amount < 1)
                 {
                     //reset to 1
                     amount = 1;
