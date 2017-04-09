@@ -95,21 +95,33 @@ namespace PokerTournament
         public override PlayerAction BettingRound2(List<PlayerAction> actions, Card[] hand)
         {
             //throw new NotImplementedException();
+            //action to be done
+            PlayerAction act;
+
+            //EVAL HAND
+            Card highCard = null;
+            handStrength = Evaluate.RateAHand(hand, out highCard); //(1 weak - 10 strong af)
 
             //review actions of other player
             EvaluateActions(actions);
 
-            //EVAL HAND
-            //save hand strength
-            Card highCard = null;
-            handStrength = Evaluate.RateAHand(hand, out highCard); //(1 weak - 10 strong af)
+            //respond ot their action
+            if(actions[actions.Length].actionPhase == "Draw")
+            {
+                //last thing done was drawing - we get the first remove
+                act = InitalBetting();
+            }
+            else if(actions[actions.Length].actionName == "fold")
+            {
+                //round is over reste all values
+                Reset();
+            }
+            else //they did something we should respond to that
+            {
+                act = ResponseAction(actions[actions.Length], highCard);
+            }
 
-                //fold if really weak
-
-                //bluff for 2+ at this point in the round
-
-            return new PlayerAction(Name, "Bet2", "bet", 1);
-
+            return act;
         }
 
         public override PlayerAction Draw(Card[] hand)
@@ -637,6 +649,19 @@ namespace PokerTournament
             }
 
             return new PlayerAction(Name, phase, "fold", 0); //Fold, but this should never happen
+        }
+
+        ///<summary>
+        /// Resets all values because the round is over
+        ///</summary>
+        private void Reset()
+        {
+            //reset hand strength for new set of cards
+            handStrength = Evaluate.RateAHand(hand, out highCard); //(1 weak - 10 strong af)
+
+            //reset altered values
+            theirHand = 1;
+            bettingCycleCount = 1;
         }
         #endregion
     }
