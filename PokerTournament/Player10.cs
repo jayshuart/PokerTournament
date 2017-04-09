@@ -96,7 +96,7 @@ namespace PokerTournament
         {
             //throw new NotImplementedException();
             //action to be done
-            PlayerAction act;
+            PlayerAction act = null;
 
             //EVAL HAND
             Card highCard = null;
@@ -106,19 +106,20 @@ namespace PokerTournament
             EvaluateActions(actions);
 
             //respond ot their action
-            if(actions[actions.Length].actionPhase == "Draw")
+            /*if(actions[actions.Count].ActionPhase == "Draw")
             {
                 //last thing done was drawing - we get the first remove
                 act = InitalBetting();
             }
-            else if(actions[actions.Length].actionName == "fold")
+            else */
+            if (actions[actions.Count].ActionPhase == "fold")
             {
                 //round is over reste all values
                 Reset();
             }
             else //they did something we should respond to that
             {
-                act = ResponseAction(actions[actions.Length], highCard);
+                act = ResponseAction(actions[actions.Count], highCard);
             }
 
             return act;
@@ -656,9 +657,6 @@ namespace PokerTournament
         ///</summary>
         private void Reset()
         {
-            //reset hand strength for new set of cards
-            handStrength = Evaluate.RateAHand(hand, out highCard); //(1 weak - 10 strong af)
-
             //reset altered values
             theirHand = 1;
             bettingCycleCount = 1;
