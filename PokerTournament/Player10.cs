@@ -34,7 +34,6 @@ namespace PokerTournament
 
         //"memory"
         private int bettingCycleCount; //times we went back and forth betting/raising
-        private float bluffLikelihood; //based on how they played and estim hand strength
 
         private int localMoney; //Keep track of how much money we have each round
         #endregion
@@ -53,11 +52,14 @@ namespace PokerTournament
             bluffWeight = 0.0f;
 
             bettingCycleCount = 1;
-            bluffLikelihood = 0.0f;
         }
 
         public override PlayerAction BettingRound1(List<PlayerAction> actions, Card[] hand)
         {
+            //Reset bettingCycleCount if it's the start of a new round
+            if (actions.Count < 2)
+                bettingCycleCount = 1;
+
             localMoney = Money; //Update how much money we actually have
 
             //Evaluate hand strength and get the high card
@@ -378,7 +380,7 @@ namespace PokerTournament
                                     break;
                             }
                         }
-
+                        bettingCycleCount = 1;
                     }
                     else //bet 1 or 2, should be same checks
                     {
@@ -451,16 +453,15 @@ namespace PokerTournament
                 switch (lastAct.ActionName)
                 {
                     case "call": //call or fold
-                        //compare estimHand and our own hands strength
-                        if (roundedEstimate > handStrength)
-                        {
-                            //estim is more we should fold
-                            response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0); //fold in the same phase with 0 dollars bc folding
-                        }
-                        else
+                        if (roundedEstimate <= handStrength) //compare estimHand and our own hands strength
                         {
                             //we trust our hand- call
                             response = new PlayerAction(Name, lastAct.ActionPhase, "call", 0);
+                        } 
+                        else
+                        {
+                            //estim is more we should fold
+                            response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0); //fold in the same phase with 0 dollars bc folding
                         }
                         break;
                     case "fold":
@@ -657,7 +658,7 @@ namespace PokerTournament
                     break;
             }
 
-            amount += (highCardValue * (highCardValue / 4)); //Modify the bet by the highCardValue
+            amount += (highCardValue * (highCardValue / 3)); //Modify the bet by the highCardValue
 
             //do we have enough money?
             do
