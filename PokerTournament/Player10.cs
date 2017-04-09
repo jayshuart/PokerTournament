@@ -35,6 +35,8 @@ namespace PokerTournament
         //"memory"
         private int bettingCycleCount; //times we went back and forth betting/raising
         private float bluffLikelihood; //based on how they played and estim hand strength
+
+        private int localMoney; //Keep track of how much money we have each round
         #endregion
 
         /// <summary>
@@ -56,6 +58,8 @@ namespace PokerTournament
 
         public override PlayerAction BettingRound1(List<PlayerAction> actions, Card[] hand)
         {
+            int localMoney = Money; //Update how much money we actually have
+
             PlayerAction otherPlayerAction = null;
 
             //Loop to get the other player's action
@@ -70,16 +74,6 @@ namespace PokerTournament
             handStrength = Evaluate.RateAHand(hand, out highCard);
 
             EvaluateActions(actions); //Check the actions of the other player
-
-            Console.WriteLine("Dealer: " + Dealer);
-            Console.WriteLine("Money: " + Money);
-            Console.WriteLine("HighCard: " + highCard);
-            Console.WriteLine("otherPlayerAction: " + otherPlayerAction);
-            Console.WriteLine("theirHand: " + theirHand);
-            Console.WriteLine("handStrength: " + handStrength);
-            Console.WriteLine("bluffWeight: " + bluffWeight);
-            Console.WriteLine("bettingCycleCount: " + bettingCycleCount);
-            Console.WriteLine("bluffLikelihood: " + bluffLikelihood);
 
             if (actions.Count > 0 && actions[actions.Count - 1].ActionPhase == "fold") //If the last action was fold
                 Reset(); //Reset all values
@@ -624,7 +618,9 @@ namespace PokerTournament
                     amount = 1;
                 }
 
-            } while (amount > Money);
+            } while (amount > localMoney);
+
+            localMoney = Money - amount;
 
             //we found the amount - give it back
             return amount;
@@ -653,7 +649,6 @@ namespace PokerTournament
                         return new PlayerAction(Name, phase, "check", 0);
                     else //Fold if we don't
                         return new PlayerAction(Name, phase, "fold", 0);
-
                 case 2: //One pair
                     if (roundedEstimate < handStrength) //Bet if we feel good about this hand
                     {
@@ -670,7 +665,6 @@ namespace PokerTournament
                         return new PlayerAction(Name, phase, "check", 0);
 
                     return new PlayerAction(Name, phase, "fold", 0); //Fold if we don't feel good about this hand
-
                 case 3: //Two pair
                     if (roundedEstimate < handStrength) //Bet if we feel good about this hand
                     {
@@ -682,7 +676,6 @@ namespace PokerTournament
                         return new PlayerAction(Name, phase, "check", 0);
 
                     return new PlayerAction(Name, phase, "fold", 0); //Fold if we don't feel good about this hand
-
                 case 4: //Three of a kind
                     if (roundedEstimate < handStrength) //Bet if we feel good about this hand
                     {
@@ -694,7 +687,6 @@ namespace PokerTournament
                         return new PlayerAction(Name, phase, "check", 0);
 
                     return new PlayerAction(Name, phase, "fold", 0); //Fold if we don't feel good about this hand
-
                 case 5: //Straight
                     if (roundedEstimate < handStrength) //Bet if we feel good about this hand
                         return new PlayerAction(Name, phase, "bet", CalcAmount(highCard.Value, false));
@@ -702,7 +694,6 @@ namespace PokerTournament
                         return new PlayerAction(Name, phase, "check", 0);
 
                     return new PlayerAction(Name, phase, "fold", 0); //Fold if we don't feel good about this hand
-
                 case 6: //Flush
                     if (roundedEstimate < handStrength) //Bet if we feel good about this hand
                         return new PlayerAction(Name, phase, "bet", CalcAmount(highCard.Value, false));
@@ -710,7 +701,6 @@ namespace PokerTournament
                         return new PlayerAction(Name, phase, "check", 0);
 
                     return new PlayerAction(Name, phase, "fold", 0); //Fold if we don't feel good about this hand
-
                 case 7: //Full house //Loop
                     if (roundedEstimate < handStrength) //Bet if we feel good about this hand
                     {
@@ -722,7 +712,6 @@ namespace PokerTournament
                         return new PlayerAction(Name, phase, "check", 0);
 
                     return new PlayerAction(Name, phase, "fold", 0); //Fold if we don't feel good about this hand
-
                 case 8: //Four of a kind
                     if (roundedEstimate < handStrength) //Bet if we feel good about this hand
                     {
@@ -734,10 +723,8 @@ namespace PokerTournament
                         return new PlayerAction(Name, phase, "check", 0);
 
                     return new PlayerAction(Name, phase, "fold", 0); //Fold if we don't feel good about this hand
-
                 case 9: //Straight flush
                     return new PlayerAction(Name, phase, "bet", CalcAmount(highCard.Value, false)); //Bet because who's gonna pull a royal flush
-
                 case 10: //Royal flush
                     return new PlayerAction(Name, phase, "bet", CalcAmount(highCard.Value, false)); //Bet because we're UNSTOPPABLE
             }
