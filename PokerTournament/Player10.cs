@@ -30,7 +30,7 @@ namespace PokerTournament
         //hand weights
         private float theirHand; //estimation of their hand strength
         private int handStrength; //own hand strength - Evaluate.RateAHand(hand, out highCard);
-        private float bluffWeight; //how willing are we to just bluff?
+        private int bluffWeight; //how willing are we to just bluff?
 
         //"memory"
         private int bettingCycleCount; //times we went back and forth betting/raising
@@ -49,7 +49,7 @@ namespace PokerTournament
             //initialize fields
             theirHand = 1;
             handStrength = 0;
-            bluffWeight = 0.0f;
+            bluffWeight = 1;
 
             bettingCycleCount = 1;
         }
@@ -67,7 +67,7 @@ namespace PokerTournament
             handStrength = Evaluate.RateAHand(hand, out highCard);
 
             EvaluateActions(actions); //Check the actions of the other player
-
+            
             if (actions.Count > 0 && actions[actions.Count - 1].ActionPhase == "fold") //If the last action was fold
                 Reset(); //Reset all values
             else if (actions.Count == 0) //If this is round 1
@@ -438,6 +438,10 @@ namespace PokerTournament
         /// <returns></returns>
         private PlayerAction ResponseAction(PlayerAction lastAct, Card highCard, string phase)
         {
+            //Edge case for not having enough money to bet, just fold
+            if (lastAct != null && (lastAct.ActionName == "bet" || lastAct.ActionName == "raise") && localMoney < lastAct.Amount)
+                return new PlayerAction(Name, phase, "fold", 0); //Fold
+
             //how much wiggle room are we giving our estimatedHand weights?
             float wiggleRoom = -1; //negative for downward wiggle
 
@@ -445,7 +449,7 @@ namespace PokerTournament
             int roundedEstimate = (int)Math.Round(theirHand + wiggleRoom, MidpointRounding.AwayFromZero);
 
             //PlayerAction to be returned and done by our AI
-            PlayerAction response = new PlayerAction(Name, phase, "fold", 0); //Fold;
+            PlayerAction response = new PlayerAction(Name, phase, "fold", 0); //Fold
 
             //First round betting this will be null
             if (lastAct != null && lastAct.ActionPhase != "Draw")
@@ -505,7 +509,7 @@ namespace PokerTournament
                                 else
                                 {
                                     //how many times have we bet? OR are we too far from their strength to risk a bluff? - AND do we have money to use?
-                                    if ((bettingCycleCount > 3 || Math.Abs(roundedEstimate - handStrength) > bluffWeight) && Money > 0)
+                                    if ((bettingCycleCount > 3 || Math.Abs(roundedEstimate - handStrength) > bluffWeight) && localMoney > 0)
                                     {
                                         //we've done it too many times, just check bud
                                         response = new PlayerAction(Name, lastAct.ActionPhase, "check", 0);
@@ -543,7 +547,7 @@ namespace PokerTournament
                             {
                                 case 1:
                                     //check our hand against their 
-                                    if(handStrength > theirHand)
+                                    if(handStrength > roundedEstimate)
                                     {
                                         //we still think we can win
                                         response = new PlayerAction(Name, lastAct.ActionPhase, "call", 0); //call
@@ -593,8 +597,23 @@ namespace PokerTournament
                         }
                         else
                         {
-                            //we dont think our hand is better
-                            response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0);
+                            if (handStrength == 1)
+                                response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0); //we dont think our hand is better
+                            else if (handStrength == 2)
+                                response = new PlayerAction(Name, lastAct.ActionPhase, "call", 0); //Call, our hand might be sort of okay
+                            else if (handStrength >= 3 && handStrength < 5 && bettingCycleCount < 3)
+                            {
+                                if (Math.Abs(roundedEstimate - handStrength) > bluffWeight * 2)
+                                    response = new PlayerAction(Name, lastAct.ActionPhase, "raise", CalcAmount(highCard.Value, false)); //Raise
+                                else if (Math.Abs(roundedEstimate - handStrength) > bluffWeight * 3)
+                                    response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0); //we dont think our hand is better
+                                else
+                                    response = new PlayerAction(Name, lastAct.ActionPhase, "call", 0); //Call, our hand might be sort of okay
+                            }
+                            else if (bettingCycleCount < 3)
+                                response = new PlayerAction(Name, lastAct.ActionPhase, "raise", CalcAmount(highCard.Value, false)); //Raise
+                            else //Should never reach here
+                                response = new PlayerAction(Name, lastAct.ActionPhase, "fold", 0); //we dont think our hand is better
                         }
                         break;
                 }
@@ -619,7 +638,15 @@ namespace PokerTournament
             switch (handStrength)
             {
                 case 1: //5
-                    amount = 5 / bettingCycleCount; //scale for betting cycle, so we dont drop 15 bucks on a crap hand
+                    Random rand = new Random();
+                    int aggroPercent = rand.Next(0, 11);
+
+                    if (aggroPercent <= 7)
+                        amount = 5 / bettingCycleCount; //scale for betting cycle, so we dont drop 15 bucks on a crap hand
+                    else if (aggroPercent == 8 || aggroPercent == 9)
+                        amount = 7 / bettingCycleCount; //scale for betting cycle, so we dont drop 15 bucks on a crap hand
+                    else
+                        amount = 10 / bettingCycleCount; //scale for betting cycle, so we dont drop 15 bucks on a crap hand
                     break;
                 case 2:
                 case 3:
@@ -665,6 +692,10 @@ namespace PokerTournament
             {
                 //cut amount down a bit
                 amount -= amount / 10;
+
+                //Prevent infinite loop
+                if (amount < 10 && amount > localMoney)
+                    amount = 1;
 
                 //account for going below the anout of money we have
                 if (amount < 1)
