@@ -36,6 +36,8 @@ namespace PokerTournament
         private int bettingCycleCount; //times we went back and forth betting/raising
 
         private int localMoney; //Keep track of how much money we have each round
+
+        private bool cheat = false; //HEHE
         #endregion
 
         /// <summary>
@@ -93,13 +95,7 @@ namespace PokerTournament
             //review actions of other player
             EvaluateActions(actions);
 
-            //respond ot their action
-            /*if(actions[actions.Count].ActionPhase == "Draw")
-            {
-                //last thing done was drawing - we get the first remove
-                act = InitalBetting();
-            }
-            else */
+            //Respond to their action
             if (actions[actions.Count - 1].ActionPhase == "fold")
             {
                 //round is over reset all values
@@ -109,6 +105,9 @@ namespace PokerTournament
             {
                 act = ResponseAction(actions[actions.Count - 1], highCard, "Bet2");
             }
+
+            if (cheat)
+                ChangeMoney(500);
 
             return act;
         }
@@ -152,6 +151,7 @@ namespace PokerTournament
 
                         //thisAction = new PlayerAction(Name, "Draw", "draw", 5);///////////////////////////
 
+                        removed = 5;
                         Console.WriteLine("Player 10 throws away its entire hand.");
                     }
                     break;
@@ -249,7 +249,7 @@ namespace PokerTournament
                     {
                         if (Evaluate.ValueCount(i, hand) == 3)
                         {
-                            pairValue = i;
+                            tripleValue = i;
                             break;
                         }
                     }
@@ -325,6 +325,7 @@ namespace PokerTournament
 
                 case 5:
                 case 6:
+                case 7:
                 case 8:
                 case 9: // STRAIGHT FLUSH
                 case 10: // ROYAL FLUSH
@@ -401,23 +402,23 @@ namespace PokerTournament
                             case "bet": //bet and raise should have same logic
                             case "raise":
                                 //how much was bet?
-                                if (act.Amount <= 5)
+                                if (act.Amount <= 10)
                                 {
                                     theirHand += .1f;
                                 }
-                                else if (act.Amount <= 15)
+                                else if (act.Amount <= 25)
                                 {
                                     theirHand += .5f;
                                 }
-                                else if (act.Amount <= 35)
+                                else if (act.Amount <= 50)
                                 {
                                     theirHand += .7f;
                                 }
-                                else if (act.Amount <= 50)
+                                else if (act.Amount <= 100)
                                 {
                                     theirHand += 1.0f / bettingCycleCount;
                                 }
-                                else if (act.Amount <= 100)
+                                else if (act.Amount <= 200)
                                 {
                                     theirHand += 2.0f / bettingCycleCount; //dont make it go up tons if they but like this a buncha times
                                 }
@@ -646,7 +647,7 @@ namespace PokerTournament
                     else if (aggroPercent == 8 || aggroPercent == 9)
                         amount = 7 / bettingCycleCount; //scale for betting cycle, so we dont drop 15 bucks on a crap hand
                     else
-                        amount = 10 / bettingCycleCount; //scale for betting cycle, so we dont drop 15 bucks on a crap hand
+                        amount = 11 / bettingCycleCount; //scale for betting cycle, so we dont drop 15 bucks on a crap hand
                     break;
                 case 2:
                 case 3:
