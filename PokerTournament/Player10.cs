@@ -58,9 +58,9 @@ namespace PokerTournament
 
         public override PlayerAction BettingRound1(List<PlayerAction> actions, Card[] hand)
         {
-            //Reset bettingCycleCount if it's the start of a new round
+            //Reset if it's the start of a new round
             if (actions.Count < 2)
-                bettingCycleCount = 1;
+                Reset();
 
             localMoney = Money; //Update how much money we actually have
 
@@ -408,11 +408,11 @@ namespace PokerTournament
                                 }
                                 else if (act.Amount <= 25)
                                 {
-                                    theirHand += .5f;
+                                    theirHand += .2f;
                                 }
                                 else if (act.Amount <= 50)
                                 {
-                                    theirHand += .7f;
+                                    theirHand += .45f;
                                 }
                                 else if (act.Amount <= 100)
                                 {
