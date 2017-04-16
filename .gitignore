@@ -45,3 +45,13 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+*.suo
+*.txt
+PokerTournament/bin/Debug/PokerTournament.exe
+*.pdb
+PokerTournament/bin/Debug/PokerTournament.vshost.exe.manifest
+.vs/PokerTournament/v14/.suo
+PokerTournament/obj/Debug/PokerTournament.pdb
+*.cache
+PokerTournament/obj/Debug/PokerTournament.csproj.FileListAbsolute.txt
+*.pdb
